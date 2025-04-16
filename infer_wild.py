@@ -12,6 +12,8 @@ from lib.utils.utils_data import flip_data
 from lib.data.dataset_wild import WildDetDataset
 from lib.utils.vismo import render_and_save
 
+from collections import OrderedDict
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="configs/pose3d/MB_ft_h36m_global_lite.yaml", help="Path to the config file.")
@@ -25,7 +27,8 @@ def parse_args():
     opts = parser.parse_args()
     return opts
 
-opts = parse_args()
+opts = parse_args() 
+# opts = pamodel_backbonerse_args()
 args = get_config(opts.config)
 
 model_backbone = load_backbone(args)
@@ -35,6 +38,15 @@ if torch.cuda.is_available():
 
 print('Loading checkpoint', opts.evaluate)
 checkpoint = torch.load(opts.evaluate, map_location=lambda storage, loc: storage)
+####
+checkpoint['model_pos'] = OrderedDict(
+    (k.replace("module.", ""), v) for k, v in checkpoint['model_pos'].items()
+)
+####
+# print('Loading checkpoint', opts.evaluate)
+# print(checkpoint['model_pos'].keys())
+# input()
+####
 model_backbone.load_state_dict(checkpoint['model_pos'], strict=True)
 model_pos = model_backbone
 model_pos.eval()

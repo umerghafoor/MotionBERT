@@ -14,6 +14,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
+from collections import OrderedDict
+
 from lib.utils.tools import *
 from lib.utils.learning import *
 from lib.utils.utils_data import flip_data
@@ -61,7 +63,7 @@ args = get_config(opts.config)
 # root_rel
 # args.rootrel = True
 
-smpl = SMPL(args.data_root, batch_size=1).cuda()
+smpl = SMPL(args.data_root, batch_size=1)#.cuda()
 J_regressor = smpl.J_regressor_h36m
 
 end = time.time()
@@ -78,7 +80,16 @@ if torch.cuda.is_available():
 chk_filename = opts.evaluate if opts.evaluate else opts.resume
 print('Loading checkpoint', chk_filename)
 checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
+####
+# print("Checkpoint keys:", checkpoint.keys())
+# input()
+####
+checkpoint['model'] = OrderedDict(
+    (k.replace("module.", ""), v) for k, v in checkpoint['model'].items()
+)
+####
 model.load_state_dict(checkpoint['model'], strict=True)
+
 model.eval()
 
 testloader_params = {
